@@ -1,28 +1,46 @@
 import { prisma } from "@/lib/prisma";
 
-function formatLocalTime(date: Date) {
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  return `${hours}:${minutes}`;
+function buildUtcDate(
+  dateString: string,
+  timeString: string,
+  timezoneOffset: number,
+) {
+  const [year, month, day] = dateString.split("-").map(Number);
+  const [hours, minutes] = timeString.split(":").map(Number);
+
+  const utcMs =
+    Date.UTC(year, month - 1, day, hours, minutes, 0) +
+    timezoneOffset * 60 * 1000;
+
+  return new Date(utcMs);
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { providerId, patientId, startTime, endTime } = body;
+    const { providerId, patientId, date, startTime, endTime, timezoneOffset } =
+      body;
 
     const parsedProviderId = Number(providerId);
     const parsedPatientId = Number(patientId);
+    const parsedTimezoneOffset = Number(timezoneOffset);
 
-    if (!parsedProviderId || !parsedPatientId || !startTime || !endTime) {
+    if (
+      !parsedProviderId ||
+      !parsedPatientId ||
+      !date ||
+      !startTime ||
+      !endTime ||
+      Number.isNaN(parsedTimezoneOffset)
+    ) {
       return Response.json(
         { error: "Missing required fields" },
         { status: 400 },
       );
     }
 
-    const start = new Date(startTime);
-    const end = new Date(endTime);
+    const start = buildUtcDate(date, startTime, parsedTimezoneOffset);
+    const end = buildUtcDate(date, endTime, parsedTimezoneOffset);
 
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       return Response.json({ error: "Invalid date format" }, { status: 400 });
@@ -35,12 +53,9 @@ export async function POST(request: Request) {
       );
     }
 
-    if (start.toDateString() !== end.toDateString()) {
-      return Response.json(
-        { error: "Appointment must start and end on the same day" },
-        { status: 400 },
-      );
-    }
+    const selectedDate = new Date(`${date}T00:00:00`);
+    const jsDay = selectedDate.getDay();
+    const dayOfWeek = jsDay === 0 ? 7 : jsDay;
 
     const provider = await prisma.provider.findUnique({
       where: { id: parsedProviderId },
@@ -58,11 +73,6 @@ export async function POST(request: Request) {
       return Response.json({ error: "Patient not found" }, { status: 404 });
     }
 
-    const jsDay = start.getDay();
-    const dayOfWeek = jsDay === 0 ? 7 : jsDay;
-    const requestedStartTime = formatLocalTime(start);
-    const requestedEndTime = formatLocalTime(end);
-
     const availabilities = await prisma.providerAvailability.findMany({
       where: {
         providerId: parsedProviderId,
@@ -72,8 +82,7 @@ export async function POST(request: Request) {
 
     const isWithinAvailability = availabilities.some((availability) => {
       return (
-        availability.startTime <= requestedStartTime &&
-        availability.endTime >= requestedEndTime
+        availability.startTime <= startTime && availability.endTime >= endTime
       );
     });
 

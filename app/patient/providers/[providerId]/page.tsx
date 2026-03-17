@@ -204,8 +204,10 @@ export default function ProviderAvailabilityPage() {
         body: JSON.stringify({
           providerId: providerAvailability.provider.id,
           patientId: loggedInUser.patientId,
-          startTime: formatDateTimeLocal(selectedSlot.start),
-          endTime: formatDateTimeLocal(selectedSlot.end),
+          date: selectedDate,
+          startTime: formatTime24(selectedSlot.start),
+          endTime: formatTime24(selectedSlot.end),
+          timezoneOffset: new Date().getTimezoneOffset(),
         }),
       });
 
@@ -544,12 +546,9 @@ function formatTime(date: Date) {
   });
 }
 
-function formatDateTimeLocal(date: Date) {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
+function formatTime24(date: Date) {
   const hours = `${date.getHours()}`.padStart(2, "0");
   const minutes = `${date.getMinutes()}`.padStart(2, "0");
 
-  return `${year}-${month}-${day}T${hours}:${minutes}:00`;
+  return `${hours}:${minutes}`;
 }
