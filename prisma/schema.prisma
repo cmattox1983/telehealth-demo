@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  PATIENT
+  PROVIDER
+  ADMIN
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  role      UserRole
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  provider Provider?
+  patient  Patient?
+}
+
+model Provider {
+  id           Int           @id @default(autoincrement())
+  userId       Int           @unique
+  firstName    String
+  lastName     String
+  specialty    String
+  state        String
+  appointments Appointment[]
+
+  user                   User                   @relation(fields: [userId], references: [id])
+  providerAvailabilities ProviderAvailability[]
+}
+
+model Patient {
+  id           Int           @id @default(autoincrement())
+  userId       Int           @unique
+  firstName    String
+  lastName     String
+  email        String        @unique
+  state        String
+  appointments Appointment[]
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model ProviderAvailability {
+  id         Int    @id @default(autoincrement())
+  providerId Int
+  dayOfWeek  Int
+  startTime  String
+  endTime    String
+
+  provider Provider @relation(fields: [providerId], references: [id])
+}
+
+model Appointment {
+  id         Int               @id @default(autoincrement())
+  providerId Int
+  patientId  Int
+  startTime  DateTime
+  endTime    DateTime
+  status     AppointmentStatus @default(SCHEDULED)
+  reason     String?
+  notes      String?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  provider Provider @relation(fields: [providerId], references: [id])
+  patient  Patient  @relation(fields: [patientId], references: [id])
+}
+
+model Event {
+  id        Int      @id @default(autoincrement())
+  type      String
+  payload   String
+  createdAt DateTime @default(now())
+}
+
+model WebhookDelivery {
+  id       Int    @id @default(autoincrement())
+  eventId  Int
+  status   String
+  attempts Int    @default(0)
+}
