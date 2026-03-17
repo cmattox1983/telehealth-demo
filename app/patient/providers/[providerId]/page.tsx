@@ -63,7 +63,9 @@ export default function ProviderAvailabilityPage() {
     try {
       setLoading(true);
 
-      const response = await fetch(`/api/providers/${id}/availability`);
+      const response = await fetch(`/api/providers/${id}/availability`, {
+        cache: "no-store",
+      });
 
       if (!response.ok) {
         throw new Error("Failed to fetch provider availability");
@@ -109,15 +111,7 @@ export default function ProviderAvailabilityPage() {
     if (dayAvailabilities.length === 0) return [];
 
     const dayAppointments = providerAvailability.appointments.filter(
-      (appointment) => {
-        const appointmentDate = new Date(appointment.startTime);
-
-        return (
-          appointmentDate.getFullYear() === selected.getFullYear() &&
-          appointmentDate.getMonth() === selected.getMonth() &&
-          appointmentDate.getDate() === selected.getDate()
-        );
-      },
+      (appointment) => getUtcDateString(appointment.startTime) === selectedDate,
     );
 
     const generatedSlots: TimeSlot[] = [];
@@ -143,11 +137,19 @@ export default function ProviderAvailabilityPage() {
           const now = new Date();
           const isPast = slotEnd <= now;
 
-          const isBooked = dayAppointments.some((appointment) => {
-            const appointmentStart = new Date(appointment.startTime);
-            const appointmentEnd = new Date(appointment.endTime);
+          const slotStartMinutes = getLocalMinutes(slotStart);
+          const slotEndMinutes = getLocalMinutes(slotEnd);
 
-            return slotStart < appointmentEnd && slotEnd > appointmentStart;
+          const isBooked = dayAppointments.some((appointment) => {
+            const appointmentStartMinutes = getUtcMinutes(
+              appointment.startTime,
+            );
+            const appointmentEndMinutes = getUtcMinutes(appointment.endTime);
+
+            return (
+              slotStartMinutes < appointmentEndMinutes &&
+              slotEndMinutes > appointmentStartMinutes
+            );
           });
 
           const blocked = isPast || isBooked;
@@ -207,7 +209,6 @@ export default function ProviderAvailabilityPage() {
           date: selectedDate,
           startTime: formatTime24(selectedSlot.start),
           endTime: formatTime24(selectedSlot.end),
-          timezoneOffset: new Date().getTimezoneOffset(),
         }),
       });
 
@@ -551,4 +552,22 @@ function formatTime24(date: Date) {
   const minutes = `${date.getMinutes()}`.padStart(2, "0");
 
   return `${hours}:${minutes}`;
+}
+
+function getUtcDateString(dateString: string) {
+  const date = new Date(dateString);
+  const year = date.getUTCFullYear();
+  const month = `${date.getUTCMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getUTCDate()}`.padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function getUtcMinutes(dateString: string) {
+  const date = new Date(dateString);
+  return date.getUTCHours() * 60 + date.getUTCMinutes();
+}
+
+function getLocalMinutes(date: Date) {
+  return date.getHours() * 60 + date.getMinutes();
 }

@@ -80,6 +80,9 @@ export default function PatientSideNav({
 
       const response = await fetch(
         `/api/patient-sidebar/${loggedInUser.patientId}`,
+        {
+          cache: "no-store",
+        },
       );
 
       const data = await response.json();
@@ -169,8 +172,8 @@ export default function PatientSideNav({
   function handleOpenReschedule(appointment: UpcomingAppointment) {
     setActionMessage("");
     setReschedulingId(appointment.id);
-    setRescheduleDate(toDateInputValue(appointment.startTime));
-    setRescheduleTime(toTimeInputValue(appointment.startTime));
+    setRescheduleDate(toUtcDateInputValue(appointment.startTime));
+    setRescheduleTime(toUtcTimeInputValue(appointment.startTime));
   }
 
   function handleCloseReschedule() {
@@ -200,9 +203,7 @@ export default function PatientSideNav({
         throw new Error("Please choose both a date and time.");
       }
 
-      const newStart = new Date(`${rescheduleDate}T${rescheduleTime}:00`);
-      const newEnd = new Date(newStart);
-      newEnd.setMinutes(newEnd.getMinutes() + 30);
+      const endTime = addThirtyMinutes(rescheduleTime);
 
       const response = await fetch(
         `/api/appointments/${appointmentId}/reschedule`,
@@ -213,8 +214,9 @@ export default function PatientSideNav({
           },
           body: JSON.stringify({
             patientId: loggedInUser.patientId,
-            startTime: newStart.toISOString(),
-            endTime: newEnd.toISOString(),
+            date: rescheduleDate,
+            startTime: rescheduleTime,
+            endTime,
           }),
         },
       );
@@ -391,14 +393,14 @@ export default function PatientSideNav({
                           Date
                         </p>
                         <p className="mt-1 text-sm font-bold text-slate-800">
-                          {formatDisplayDate(appointment.startTime)}
+                          {formatDisplayDateUtc(appointment.startTime)}
                         </p>
 
                         <p className="mt-3 text-sm font-semibold text-slate-500">
                           Time
                         </p>
                         <p className="mt-1 text-sm font-bold text-slate-800">
-                          {formatTimeRange(
+                          {formatTimeRangeUtc(
                             appointment.startTime,
                             appointment.endTime,
                           )}
@@ -418,26 +420,7 @@ export default function PatientSideNav({
                               handleCancelAppointment(appointment.id)
                             }
                             disabled={actionLoadingId === appointment.id}
-                            style={{
-                              display: "flex",
-                              width: "100%",
-                              height: "44px",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              borderRadius: "12px",
-                              border: "2px solid #dc2626",
-                              backgroundColor: "#ef4444",
-                              color: "#ffffff",
-                              fontSize: "14px",
-                              fontWeight: 700,
-                              boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
-                              cursor:
-                                actionLoadingId === appointment.id
-                                  ? "not-allowed"
-                                  : "pointer",
-                              opacity:
-                                actionLoadingId === appointment.id ? 0.7 : 1,
-                            }}
+                            className="flex h-11 w-full items-center justify-center rounded-xl border-2 border-red-600 bg-red-500 px-4 text-sm font-bold text-white shadow-sm transition duration-200 hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-70"
                           >
                             {actionLoadingId === appointment.id
                               ? "Processing..."
@@ -448,26 +431,7 @@ export default function PatientSideNav({
                             type="button"
                             onClick={() => handleOpenReschedule(appointment)}
                             disabled={actionLoadingId === appointment.id}
-                            style={{
-                              display: "flex",
-                              width: "100%",
-                              height: "44px",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              borderRadius: "12px",
-                              border: "2px solid #2563eb",
-                              backgroundColor: "#3b82f6",
-                              color: "#ffffff",
-                              fontSize: "14px",
-                              fontWeight: 700,
-                              boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
-                              cursor:
-                                actionLoadingId === appointment.id
-                                  ? "not-allowed"
-                                  : "pointer",
-                              opacity:
-                                actionLoadingId === appointment.id ? 0.7 : 1,
-                            }}
+                            className="flex h-11 w-full items-center justify-center rounded-xl bg-blue-500 px-4 text-sm font-bold text-white transition duration-200 hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-70"
                           >
                             Reschedule Appointment
                           </button>
@@ -549,7 +513,7 @@ export default function PatientSideNav({
   );
 }
 
-function formatDisplayDate(dateString: string) {
+function formatDisplayDateUtc(dateString: string) {
   const date = new Date(dateString);
 
   return date.toLocaleDateString(undefined, {
@@ -557,35 +521,48 @@ function formatDisplayDate(dateString: string) {
     month: "short",
     day: "numeric",
     year: "numeric",
+    timeZone: "UTC",
   });
 }
 
-function formatTime(dateString: string) {
+function formatTimeUtc(dateString: string) {
   const date = new Date(dateString);
 
   return date.toLocaleTimeString(undefined, {
     hour: "numeric",
     minute: "2-digit",
+    timeZone: "UTC",
   });
 }
 
-function formatTimeRange(startString: string, endString: string) {
-  return `${formatTime(startString)} - ${formatTime(endString)}`;
+function formatTimeRangeUtc(startString: string, endString: string) {
+  return `${formatTimeUtc(startString)} - ${formatTimeUtc(endString)}`;
 }
 
-function toDateInputValue(dateString: string) {
+function toUtcDateInputValue(dateString: string) {
   const date = new Date(dateString);
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
+  const year = date.getUTCFullYear();
+  const month = `${date.getUTCMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getUTCDate()}`.padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 }
 
-function toTimeInputValue(dateString: string) {
+function toUtcTimeInputValue(dateString: string) {
   const date = new Date(dateString);
-  const hours = `${date.getHours()}`.padStart(2, "0");
-  const minutes = `${date.getMinutes()}`.padStart(2, "0");
+  const hours = `${date.getUTCHours()}`.padStart(2, "0");
+  const minutes = `${date.getUTCMinutes()}`.padStart(2, "0");
 
   return `${hours}:${minutes}`;
+}
+
+function addThirtyMinutes(timeString: string) {
+  const [hours, minutes] = timeString.split(":").map(Number);
+  const totalMinutes = hours * 60 + minutes + 30;
+  const nextHours = Math.floor(totalMinutes / 60)
+    .toString()
+    .padStart(2, "0");
+  const nextMinutes = (totalMinutes % 60).toString().padStart(2, "0");
+
+  return `${nextHours}:${nextMinutes}`;
 }

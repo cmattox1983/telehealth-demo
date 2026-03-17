@@ -1,37 +1,26 @@
 import { prisma } from "@/lib/prisma";
 
-function buildUtcDate(
-  dateString: string,
-  timeString: string,
-  timezoneOffset: number,
-) {
+function buildUtcDate(dateString: string, timeString: string) {
   const [year, month, day] = dateString.split("-").map(Number);
   const [hours, minutes] = timeString.split(":").map(Number);
 
-  const utcMs =
-    Date.UTC(year, month - 1, day, hours, minutes, 0) +
-    timezoneOffset * 60 * 1000;
-
-  return new Date(utcMs);
+  return new Date(Date.UTC(year, month - 1, day, hours, minutes, 0));
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { providerId, patientId, date, startTime, endTime, timezoneOffset } =
-      body;
+    const { providerId, patientId, date, startTime, endTime } = body;
 
     const parsedProviderId = Number(providerId);
     const parsedPatientId = Number(patientId);
-    const parsedTimezoneOffset = Number(timezoneOffset);
 
     if (
       !parsedProviderId ||
       !parsedPatientId ||
       !date ||
       !startTime ||
-      !endTime ||
-      Number.isNaN(parsedTimezoneOffset)
+      !endTime
     ) {
       return Response.json(
         { error: "Missing required fields" },
@@ -39,8 +28,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const start = buildUtcDate(date, startTime, parsedTimezoneOffset);
-    const end = buildUtcDate(date, endTime, parsedTimezoneOffset);
+    const start = buildUtcDate(date, startTime);
+    const end = buildUtcDate(date, endTime);
 
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       return Response.json({ error: "Invalid date format" }, { status: 400 });
