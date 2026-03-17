@@ -1,29 +1,16 @@
-# 🏥 Telehealth Scheduling Demo
+# 🏥 Telehealth Scheduling App
 
-A full-stack telehealth scheduling application that allows patients to search providers, book appointments, and manage their care — while providers can view schedules, manage appointments, and receive alerts.
+A full-stack telehealth scheduling platform that allows patients to search for providers, book appointments, and manage schedules, while providers can view and manage their availability through a dashboard.
 
 ---
 
 ## 🚀 Live Demo
 
-_(Add your Vercel link here once deployed)_
+🔗 https://telehealth-demo-lovat.vercel.app
 
 ---
 
-## 🧠 Overview
-
-This project simulates a real-world telehealth platform with:
-
-- Patient onboarding and provider search
-- Appointment booking and scheduling
-- Provider dashboard with calendar view
-- Alerts for scheduling, cancellations, and updates
-
-Built as a portfolio project to demonstrate full-stack development skills in a healthcare-focused environment.
-
----
-
-## 🛠️ Tech Stack
+## 🧠 Tech Stack
 
 ### Frontend
 
@@ -31,7 +18,6 @@ Built as a portfolio project to demonstrate full-stack development skills in a h
 - React
 - TypeScript
 - Tailwind CSS
-- FullCalendar (Scheduling UI)
 
 ### Backend
 
@@ -40,123 +26,84 @@ Built as a portfolio project to demonstrate full-stack development skills in a h
 
 ### Database
 
-- SQLite (local development)
+- PostgreSQL (hosted on Neon)
 
-> ⚠️ Note: SQLite is used for development/demo purposes. In production, this would be replaced with PostgreSQL (Neon, Supabase, etc.).
+### Deployment
 
----
-
-## 🔐 Demo Login Credentials
-
-### 👤 Patient Accounts
-
-```
-Email: patient1@test.com
-Password: password123
-```
-
-```
-Email: patient2@test.com
-Password: password123
-```
-
-```
-Email: patient3@test.com
-Password: password123
-```
-
----
-
-### 🩺 Provider Accounts
-
-```
-Email: provider1@test.com
-Password: password123
-```
-
-```
-Email: provider2@test.com
-Password: password123
-```
-
-```
-Email: provider3@test.com
-Password: password123
-```
+- Vercel (Frontend + Serverless API)
+- Neon (Serverless PostgreSQL Database)
 
 ---
 
 ## ✨ Features
 
-### 👤 Patients
+### 👤 Patient
 
 - Search providers by specialty and state
-- View provider profiles
+- View provider availability
 - Book appointments
-- View upcoming appointments
+- Login system with validation
 
-### 🩺 Providers
+### 🩺 Provider
 
-- Dashboard with weekly calendar view
-- View scheduled appointments
-- Real-time alerts:
-  - New bookings
-  - Cancellations
-  - Reschedules
+- Provider dashboard
+- Calendar view of appointments
+- View booked patients
+- Manage availability
 
 ---
 
-## 📁 Project Structure
+## 🔐 Demo Login Credentials
 
-```
-/app        → Next.js App Router pages
-/components → Reusable UI components
-/lib        → Utilities and Prisma client
-/prisma     → Schema, migrations, and seed data
-/public     → Static assets
+### Patient Accounts
+
+| Email                                         | Password    |
+| --------------------------------------------- | ----------- |
+| [patient1@test.com](mailto:patient1@test.com) | password123 |
+| [patient2@test.com](mailto:patient2@test.com) | password123 |
+| [patient3@test.com](mailto:patient3@test.com) | password123 |
+
+### Provider Accounts
+
+| Email                                           | Password    |
+| ----------------------------------------------- | ----------- |
+| [provider1@test.com](mailto:provider1@test.com) | password123 |
+| [provider2@test.com](mailto:provider2@test.com) | password123 |
+| [provider3@test.com](mailto:provider3@test.com) | password123 |
+
+---
+
+## ⚙️ Environment Setup
+
+Create a `.env` file in the root directory:
+
+```env
+DATABASE_URL="your_neon_postgres_connection_string"
 ```
 
 ---
 
-## ⚙️ Getting Started (Local Development)
+## 🛠️ Local Development
 
-### 1. Clone the repo
-
-```bash
-git clone https://github.com/cmattox1983/telehealth-demo.git
-cd telehealth-demo
-```
-
----
-
-### 2. Install dependencies
+Install dependencies:
 
 ```bash
 npm install
 ```
 
----
-
-### 3. Environment variables
-
-Create a `.env` file:
+Push Prisma schema:
 
 ```bash
-DATABASE_URL="file:./dev.db"
+npx prisma db push
 ```
 
----
-
-### 4. Setup database
+Seed database:
 
 ```bash
-npx prisma migrate dev
 npx prisma db seed
 ```
 
----
-
-### 5. Run the app
+Run development server:
 
 ```bash
 npm run dev
@@ -164,46 +111,54 @@ npm run dev
 
 ---
 
-## 🚧 Known Limitations
+## 📦 Deployment
 
-- SQLite does not persist in serverless deployments (Vercel)
-- Demo authentication (no real auth provider)
-- Minimal backend authorization (designed for demo purposes)
+This project is deployed using:
+
+- Vercel for hosting
+- Neon for database
+
+Make sure to set the following environment variable in Vercel:
+
+```env
+DATABASE_URL=your_neon_postgres_connection_string
+```
 
 ---
 
-## 🔮 Future Improvements
+## 🧩 Architecture Overview
 
-- Migrate to PostgreSQL (Neon/Supabase)
-- Add authentication (NextAuth / Clerk)
-- Role-based backend security
+- Serverless API routes handle authentication and data fetching
+- Prisma manages database queries and schema
+- PostgreSQL provides scalable, production-ready data storage
+- Tailwind CSS ensures responsive UI across devices
+
+---
+
+## 🎯 Future Improvements
+
+- Authentication with JWT or NextAuth
+- Real-time availability updates
+- Email notifications for bookings
 - Admin dashboard
-- Improved mobile UX
+- Pagination & filtering enhancements
 
 ---
 
 ## 👨‍💻 Author
 
-**Chris Mattox**
+Christopher Mattox
 Frontend Developer
 
 - GitHub: https://github.com/cmattox1983
-- LinkedIn: _(add your link here)_
+- LinkedIn: https://linkedin.com/in/christopher-p-mattox
 
 ---
 
-## 💡 Purpose
+## 📌 Notes
 
-This project demonstrates:
-
-- Full-stack application architecture
-- API development with Next.js
-- Database design with Prisma
-- UI/UX with Tailwind and React
-- Real-world scheduling workflows
+- This project uses a **serverless PostgreSQL database (Neon)** instead of SQLite for production readiness.
+- Prisma ORM is used for type-safe database interactions.
+- Designed to simulate a real-world healthcare scheduling system.
 
 ---
-
-## ⭐️ Support
-
-If you found this project helpful, feel free to star the repo or connect with me.
