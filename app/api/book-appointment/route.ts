@@ -58,7 +58,8 @@ export async function POST(request: Request) {
       return Response.json({ error: "Patient not found" }, { status: 404 });
     }
 
-    const dayOfWeek = start.getDay();
+    const jsDay = start.getDay();
+    const dayOfWeek = jsDay === 0 ? 7 : jsDay;
     const requestedStartTime = formatLocalTime(start);
     const requestedEndTime = formatLocalTime(end);
 

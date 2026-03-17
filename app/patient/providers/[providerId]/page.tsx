@@ -141,7 +141,6 @@ export default function ProviderAvailabilityPage() {
 
         if (slotEnd <= endBoundary) {
           const now = new Date();
-
           const isPast = slotEnd <= now;
 
           const isBooked = dayAppointments.some((appointment) => {
@@ -205,8 +204,8 @@ export default function ProviderAvailabilityPage() {
         body: JSON.stringify({
           providerId: providerAvailability.provider.id,
           patientId: loggedInUser.patientId,
-          startTime: selectedSlot.start.toISOString(),
-          endTime: selectedSlot.end.toISOString(),
+          startTime: formatDateTimeLocal(selectedSlot.start),
+          endTime: formatDateTimeLocal(selectedSlot.end),
         }),
       });
 
@@ -401,6 +400,16 @@ export default function ProviderAvailabilityPage() {
                   {!loading && providerAvailability && (
                     <div className="space-y-8">
                       <div className="rounded-2xl border-2 border-blue-200 bg-white/70 p-4 shadow-sm sm:p-5">
+                        <div className="mb-4 flex justify-start">
+                          <button
+                            type="button"
+                            onClick={() => router.push("/patient/search")}
+                            className="rounded-xl border-2 border-blue-500 bg-white px-4 py-2 text-sm font-bold text-blue-600 transition duration-200 hover:bg-blue-50 cursor-pointer"
+                          >
+                            Back to Provider Search
+                          </button>
+                        </div>
+
                         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                           <div className="rounded-xl border border-blue-100 bg-white px-4 py-4">
                             <p className="text-sm font-semibold text-slate-500">
@@ -469,14 +478,14 @@ export default function ProviderAvailabilityPage() {
                           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                             {slots.map((slot) => (
                               <button
-                                key={slot.start.toISOString()}
+                                key={`${slot.start.getTime()}-${slot.end.getTime()}`}
                                 type="button"
                                 disabled={slot.blocked}
                                 onClick={() => handleSlotClick(slot)}
                                 className={`rounded-xl border-2 px-5 py-4 text-left transition duration-200 ${
                                   slot.blocked
                                     ? "cursor-not-allowed border-slate-300 bg-slate-200 text-slate-500"
-                                    : "cursor-pointer border-teal-700 bg-white text-slate-800  hover:border-blue-500 hover:bg-teal-50"
+                                    : "cursor-pointer border-teal-700 bg-white text-slate-800 hover:border-blue-500 hover:bg-teal-50"
                                 }`}
                               >
                                 <p className="text-lg font-bold">
@@ -533,4 +542,14 @@ function formatTime(date: Date) {
     hour: "numeric",
     minute: "2-digit",
   });
+}
+
+function formatDateTimeLocal(date: Date) {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  const hours = `${date.getHours()}`.padStart(2, "0");
+  const minutes = `${date.getMinutes()}`.padStart(2, "0");
+
+  return `${year}-${month}-${day}T${hours}:${minutes}:00`;
 }
